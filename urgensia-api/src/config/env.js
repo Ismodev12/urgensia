@@ -20,7 +20,8 @@ for (const key of required) {
 module.exports = {
   port:        parseInt(process.env.PORT, 10) || 3001,
   nodeEnv:     process.env.NODE_ENV || 'development',
-  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
+  // Slash final retiré : le CORS compare à l'exact, or le navigateur envoie l'origine sans « / ».
+  frontendUrl: (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/+$/, ''),
 
   db: {
     host:     process.env.DB_HOST,

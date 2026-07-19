@@ -1,7 +1,7 @@
 import axios from 'axios';
 import api from './api';
 
-const API_PUBLIC = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_PUBLIC = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/+$/, '');
 
 /**
  * Récupère les données du plan hospitalier (tous les services + coordonnées SVG).

@@ -6,9 +6,11 @@
  */
 import axios from 'axios';
 
-// En production, définir VITE_API_URL (ex. https://urgensia-api.onrender.com) sur Netlify.
+// En production, définir VITE_API_URL (ex. https://urgensia.onrender.com) sur Netlify.
 // En local, on retombe sur le backend local. Le socket (socketService) utilise la même variable.
-const BASE_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api`;
+// On retire tout slash final pour éviter un double slash (…//api) qui casse le routing Express.
+export const API_ORIGIN = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/+$/, '');
+const BASE_URL = `${API_ORIGIN}/api`;
 
 const api = axios.create({
   baseURL: BASE_URL,

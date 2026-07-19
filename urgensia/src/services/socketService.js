@@ -1,7 +1,7 @@
 import { io } from 'socket.io-client';
 import { getAccessToken } from './api';
 
-const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const SOCKET_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/+$/, '');
 
 let socket = null;
 // File d'attente : listeners enregistrés AVANT que le socket soit créé
