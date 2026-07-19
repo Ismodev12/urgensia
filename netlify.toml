@@ -1,0 +1,16 @@
+# Configuration de déploiement Netlify — front URGENSIA (React/Vite)
+# Ce fichier fait AUTORITÉ : il écrase les réglages de l'interface Netlify.
+
+[build]
+  # Dossier du front dans le repo (Netlify entre dedans avant de builder)
+  base = "urgensia"
+  # Commande de build Vite
+  command = "npm run build"
+  # Dossier de sortie — RELATIF au "base" ci-dessus → urgensia/dist
+  publish = "dist"
+
+# Routing SPA : toute route inconnue renvoie index.html (React Router gère la suite)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

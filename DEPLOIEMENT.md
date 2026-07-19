@@ -20,15 +20,38 @@
 - [ ] Dans la page de la base, copier **« External Database URL »** (commence par `postgresql://…`). On la note : `URL_DB`.
 
 ## 2️⃣ Charger le schéma + les données de démo
-En local, dans un terminal (remplacer `URL_DB` par l'URL copiée) :
+En local, dans `urgensia-api`. **Ordre important** : `001` → **seed** → `002…008`
+(le seed doit passer avant `005`, et l'UTF-8 évite les accents cassés).
+
+**Windows (CMD)** — remplacer l'URL par la tienne :
+```bat
+cd urgensia-api
+set PGCLIENTENCODING=UTF8
+set DB=postgresql://user:pass@host/dbname
+
+psql "%DB%" -v ON_ERROR_STOP=1 -f src\db\migrations\001_init.sql
+psql "%DB%" -v ON_ERROR_STOP=1 -f src\db\seeds\001_seed.sql
+psql "%DB%" -v ON_ERROR_STOP=1 -f src\db\migrations\002_pretriage.sql
+psql "%DB%" -v ON_ERROR_STOP=1 -f src\db\migrations\003_orientation.sql
+psql "%DB%" -v ON_ERROR_STOP=1 -f src\db\migrations\004_code_suivi_patient.sql
+psql "%DB%" -v ON_ERROR_STOP=1 -f src\db\migrations\005_retriage.sql
+psql "%DB%" -v ON_ERROR_STOP=1 -f src\db\migrations\006_localisation_specialites.sql
+psql "%DB%" -v ON_ERROR_STOP=1 -f src\db\migrations\007_reset_password.sql
+psql "%DB%" -v ON_ERROR_STOP=1 -f src\db\migrations\008_services_normalisation.sql
+```
+
+**macOS / Linux (bash)** :
 ```bash
 cd urgensia-api
-# Migrations 001 → 008, dans l'ordre
-for f in src/db/migrations/00*.sql; do psql "URL_DB" -f "$f"; done
-# Données de démo (services, niveaux, comptes admin/médecin/infirmier)
-psql "URL_DB" -f src/db/seeds/001_seed.sql
+export PGCLIENTENCODING=UTF8
+export DB="postgresql://user:pass@host/dbname"
+for f in 001_init; do psql "$DB" -v ON_ERROR_STOP=1 -f "src/db/migrations/$f.sql"; done
+psql "$DB" -v ON_ERROR_STOP=1 -f src/db/seeds/001_seed.sql
+for f in 002_pretriage 003_orientation 004_code_suivi_patient 005_retriage 006_localisation_specialites 007_reset_password 008_services_normalisation; do psql "$DB" -v ON_ERROR_STOP=1 -f "src/db/migrations/$f.sql"; done
 ```
-- [ ] Aucune erreur rouge → la base est prête (les comptes de démo existent).
+
+- [ ] Aucune erreur **ERROR** rouge → la base est prête.
+- [ ] Vérifie l'UTF-8 : `psql "%DB%" -c "SELECT nom FROM services ORDER BY nom;"` doit montrer **Pédiatrie** / **Réanimation** avec accents.
 
 ## 3️⃣ Déployer le backend (Render Web Service)
 - [ ] Render : **New +** → **Web Service** → connecter le repo GitHub.
