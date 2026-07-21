@@ -29,6 +29,17 @@ export async function getPatient(id) {
  * Crée un patient avec triage MTS calculé côté serveur.
  * Retourne { patient, triage, codeSuivi }
  */
+/**
+ * POST /api/patients/interpreter-symptomes
+ * Traduit une description libre de symptômes en drapeaux exploitables par le
+ * moteur de triage, via l'IA (aide à la décision — l'infirmier valide).
+ * @returns {{ symptomes: Object, echelleDouleur: number, resume: string }}
+ */
+export async function interpreterSymptomes(texte) {
+  const { data } = await api.post('/patients/interpreter-symptomes', { texte });
+  return data;
+}
+
 export async function createPatient(formData) {
   const { data } = await api.post('/patients', formData);
   return {

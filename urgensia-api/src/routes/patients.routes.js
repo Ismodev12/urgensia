@@ -14,6 +14,8 @@ router.get ('/',                    roles('agent', 'medecin', 'admin'), ctrl.lis
 router.post('/urgence',             roles('agent'),                     ctrl.creerPatientUrgence);
 // 🔁 Réévaluation : détection des délais cibles dépassés (tâche planifiée / chargement file)
 router.post('/reevaluation/scan',   roles('agent', 'admin'),            ctrl.scanReevaluations);
+// 🤖 IA : interprète une description libre de symptômes → drapeaux de triage
+router.post('/interpreter-symptomes', roles('agent'),                   ctrl.interpreterSymptomes);
 router.post('/',                    roles('agent'),                     ctrl.creerPatient);
 router.get ('/:id',                 roles('agent', 'medecin', 'admin'), ctrl.getPatient);
 router.get ('/:id/triages',         roles('agent', 'medecin', 'admin'), ctrl.getHistoriqueTriages);

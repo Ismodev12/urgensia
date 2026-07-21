@@ -4,6 +4,7 @@ const socket   = require('../services/socket.service');
 const triage   = require('../services/triage.service');
 const notif    = require('../services/notif.service');
 const retriage = require('../services/retriage.service');
+const symptomeIA = require('../services/symptomeIA.service');
 
 // ─── Générateur de code suivi patient ───────────────────────────────────────────
 
@@ -729,6 +730,32 @@ const creerPatientUrgence = async (req, res, next) => {
   }
 };
 
+// ─── POST /api/patients/interpreter-symptomes ───────────────────────────────
+/**
+ * Traduit une description libre de symptômes en drapeaux exploitables par le
+ * moteur de triage, via l'IA Claude. Aide à la décision : l'infirmier valide.
+ */
+const interpreterSymptomes = async (req, res, next) => {
+  try {
+    const texte = ((req.body && req.body.texte) || '').trim();
+    if (texte.length < 3) {
+      return res.status(400).json({ error: 'Décrivez le(s) symptôme(s) en quelques mots.' });
+    }
+    if (texte.length > 1000) {
+      return res.status(400).json({ error: 'Description trop longue (1000 caractères maximum).' });
+    }
+
+    const resultat = await symptomeIA.interpreterSymptomes(texte);
+    return res.status(200).json(resultat);
+  } catch (err) {
+    if (err.code === 'IA_INDISPONIBLE') {
+      return res.status(503).json({ error: "L'assistance IA n'est pas configurée sur ce serveur." });
+    }
+    console.error('Erreur interprétation IA:', err.message);
+    return res.status(502).json({ error: "L'analyse IA a échoué. Sélectionnez les symptômes manuellement." });
+  }
+};
+
 module.exports = {
   listerPatients,
   getPatient,
@@ -738,4 +765,5 @@ module.exports = {
   creerPatientUrgence,
   scanReevaluations,
   getHistoriqueTriages,
+  interpreterSymptomes,
 };

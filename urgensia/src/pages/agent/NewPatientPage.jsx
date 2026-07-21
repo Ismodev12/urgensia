@@ -7,6 +7,7 @@ import {
   ChevronRight, ChevronLeft, Check, Stethoscope,
   Wind, Droplets, Zap, Frown, EyeOff, Flame, Brain, Pill,
   HeartHandshake, Sparkles, ShieldCheck, Laugh, Smile, Meh, Angry, Gauge,
+  Wand2, Loader2,
 } from 'lucide-react';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { Card } from '../../components/common/Card';
@@ -14,7 +15,7 @@ import { Button } from '../../components/common/Button';
 import { PhotoCapture } from '../../components/common/PhotoCapture';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext';
-import { createPatient, uploadPatientPhoto } from '../../services/patientService';
+import { createPatient, uploadPatientPhoto, interpreterSymptomes } from '../../services/patientService';
 
 const symptoms = [
   { id: 'douleurThoracique',      label: 'Douleur thoracique',    desc: 'Poitrine, oppression',   Icon: Heart,       critical: true,  group: 'frequent' },
@@ -151,6 +152,11 @@ export default function NewPatientPage() {
   const [submitting,       setSubmitting]       = useState(false);
   const [submitError,      setSubmitError]      = useState(null);
   const [photoFile,        setPhotoFile]        = useState(null); // fichier photo facultatif
+  // Assistance IA — symptômes en texte libre
+  const [descriptionIA,    setDescriptionIA]    = useState('');
+  const [analyseIA,        setAnalyseIA]        = useState(null);  // { ids, resume, echelleDouleur }
+  const [analysingIA,      setAnalysingIA]      = useState(false);
+  const [erreurIA,         setErreurIA]         = useState(null);
 
   const navigate = useNavigate();
   const { setTriageResult, setPendingPatient } = useApp();
@@ -169,6 +175,32 @@ export default function NewPatientPage() {
 
   const toggleSymptom = (id) => {
     setSelectedSymptoms(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  // Analyse d'une description libre par l'IA → coche les symptômes détectés.
+  const analyserAvecIA = async () => {
+    const texte = descriptionIA.trim();
+    if (texte.length < 3 || analysingIA) return;
+    setAnalysingIA(true);
+    setErreurIA(null);
+    setAnalyseIA(null);
+    try {
+      const { symptomes, echelleDouleur, resume } = await interpreterSymptomes(texte);
+      const ids = Object.keys(symptomes || {});
+      if (ids.length > 0) {
+        setSelectedSymptoms(prev => {
+          const next = { ...prev };
+          ids.forEach(id => { next[id] = true; });
+          return next;
+        });
+      }
+      if (echelleDouleur > 0) setDouleurScale(prev => Math.max(prev, echelleDouleur));
+      setAnalyseIA({ ids, resume, echelleDouleur });
+    } catch (err) {
+      setErreurIA(err.response?.data?.error ?? "L'analyse IA a échoué. Sélectionnez les symptômes manuellement.");
+    } finally {
+      setAnalysingIA(false);
+    }
   };
 
   const selectedCount = Object.values(selectedSymptoms).filter(Boolean).length;
@@ -487,6 +519,71 @@ export default function NewPatientPage() {
                       <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
                       Un point rose signale un symptôme prioritaire pour la sécurité du patient.
                     </p>
+                  </Card>
+
+                  {/* Symptôme absent de la liste — assistance IA */}
+                  <Card>
+                    <div className="flex items-start gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center flex-shrink-0">
+                        <Wand2 className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-night-blue">Vous ne trouvez pas le symptôme ?</h3>
+                        <p className="text-xs text-soft-gray">Décrivez-le avec vos mots — l'assistant le traduit pour le triage. Vous validez.</p>
+                      </div>
+                    </div>
+
+                    <textarea
+                      value={descriptionIA}
+                      onChange={(e) => setDescriptionIA(e.target.value)}
+                      rows={3}
+                      maxLength={1000}
+                      placeholder="Ex : grosse douleur au ventre depuis ce matin, il transpire et se sent très faible…"
+                      className="w-full px-4 py-3 border border-slate-200 rounded-2xl text-sm text-night-blue placeholder-slate-400 resize-none bg-slate-50 transition-all focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 focus:bg-white"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={analyserAvecIA}
+                      disabled={analysingIA || descriptionIA.trim().length < 3}
+                      className="mt-3 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {analysingIA ? (
+                        <><Loader2 className="w-4 h-4 animate-spin" /> Analyse en cours…</>
+                      ) : (
+                        <><Sparkles className="w-4 h-4" /> Analyser avec l'IA</>
+                      )}
+                    </button>
+
+                    {erreurIA && (
+                      <p className="mt-3 text-sm text-rose-600 bg-rose-50 rounded-xl px-3 py-2">{erreurIA}</p>
+                    )}
+
+                    {analyseIA && (
+                      <div className="mt-4 rounded-2xl border border-teal-100 bg-teal-50/60 p-4">
+                        {analyseIA.resume && (
+                          <p className="text-sm text-night-blue">{analyseIA.resume}</p>
+                        )}
+                        {analyseIA.ids.length > 0 ? (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {analyseIA.ids.map((id) => {
+                              const s = symptoms.find((x) => x.id === id);
+                              return (
+                                <span key={id} className="inline-flex items-center gap-1 text-xs font-semibold bg-teal-600 text-white px-2.5 py-1 rounded-full">
+                                  <Check className="w-3 h-3" /> {s ? s.label : id}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <p className="mt-2 text-xs text-soft-gray">Aucun symptôme de la liste détecté — cochez manuellement si besoin.</p>
+                        )}
+                        <p className="mt-3 text-xs text-soft-gray flex items-center gap-1.5">
+                          <ShieldCheck className="w-3.5 h-3.5 text-teal-600 flex-shrink-0" />
+                          Vérifiez les symptômes cochés ci-dessus — vous gardez le dernier mot.
+                        </p>
+                      </div>
+                    )}
                   </Card>
 
                   {/* Échelle de douleur (EVA) — plus humaine */}
