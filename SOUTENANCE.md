@@ -77,7 +77,7 @@
 
 **Ce que tu dis :**
 > « URGENSIA est une **application web** qui accompagne tout le parcours du patient aux urgences. Elle fait intervenir quatre acteurs :
-> – le **citoyen / patient**, qui peut même faire un **pré-triage depuis chez lui** ;
+> – le **citoyen / patient**, qui **suit son passage en temps réel**, sans créer de compte ;
 > – l'**infirmier d'accueil-triage**, qui enregistre le patient et réalise le triage ;
 > – le **médecin**, qui prend en charge selon la priorité ;
 > – l'**administrateur**, qui gère les comptes, les services et supervise l'activité.
@@ -234,3 +234,80 @@
 10. Bénéfices / valeur ajoutée
 11. Difficultés & perspectives
 12. Conclusion + Merci
+
+---
+
+## 🗂️ Annexe A — Présentation détaillée de TOUTES les fonctionnalités (script)
+
+> À utiliser pour un tour **fonctionnalité par fonctionnalité**, ou si le jury demande « qu'est-ce que ça sait faire exactement ? ».
+> Format : **[Fonctionnalité]** — *la phrase que tu dis*.
+
+### 👤 A. Côté citoyen / patient — *aucun compte requis*
+> Phrase d'intro : « Le patient est **acteur de son parcours** : il suit tout, **en temps réel** et **sans créer de compte**. »
+
+1. **Vitrine publique (page d'accueil)** — « Un point d'entrée clair pour **accéder à son suivi** ou se connecter à l'espace soignant. »
+2. **Suivi 100 % sans compte** — « Le patient n'a **rien à installer ni à créer** : un simple **code (ou QR code)**, remis après son triage, lui suffit pour suivre tout son passage. »
+3. **Accès patient par code** — « À l'hôpital ou depuis son téléphone, il saisit son code pour retrouver son dossier de suivi. »
+4. **Suivi de la file en temps réel** — « Il voit sa **position exacte** dans la file et une **estimation d'attente**, mises à jour en direct. »
+5. **Notification “c'est bientôt votre tour” / “c'est votre tour”** — « Quand il approche de la tête de file, il est **prévenu automatiquement** — plus besoin de rester debout devant le guichet. »
+6. **Orientation + plan hospitalier interactif** — « Une fois orienté, il voit **vers quel service aller** et un **plan/itinéraire** dans l'hôpital. »
+
+### 🩺 B. Côté infirmier d'accueil-triage
+> Phrase d'intro : « C'est le poste central : il enregistre le patient **et** réalise le triage. »
+
+7. **Connexion sécurisée** — « Accès par identifiants, avec des **droits limités à son rôle**. »
+8. **Tableau de bord temps réel** — « Vue d'ensemble : patients du jour, **cas critiques**, file en direct, indicateurs clés. »
+9. **Enregistrement d'un nouveau patient** — « Formulaire guidé : **identité**, **constantes vitales** (température, tension, saturation, pouls…), **symptômes**, et même une **photo**. »
+10. **Moteur de triage Manchester (5 niveaux)** — « À partir de ces données, le système calcule **objectivement** la priorité, du niveau 1 (critique) au niveau 5 (non urgent). »
+11. **Orientation automatique par spécialité** — « Il ne se contente pas de prioriser : il **oriente vers le bon service** (Cardiologie, Neurologie, Pédiatrie, Chirurgie, Réanimation, Urgences). »
+12. **Code de suivi + QR** — « Le patient repart avec un **code (PAT-XXXXXX)** et un **QR code** pour suivre son passage. »
+13. **File d'attente priorisée** — « La file se **réordonne toute seule** : un cas grave remonte automatiquement devant un cas bénin, quel que soit l'ordre d'arrivée. »
+14. **Vue “cas critiques”** — « Un écran dédié pour ne **jamais perdre de vue** les patients les plus graves. »
+15. **Réévaluation / re-triage** — « Un patient qui attend trop longtemps est **signalé pour réévaluation** — son état a pu se dégrader. »
+16. **Enregistrement d'urgence express** — « Pour un cas vital, un **flux rapide** permet de créer le patient en priorité absolue. »
+
+### 👨‍⚕️ C. Côté médecin
+> Phrase d'intro : « Le médecin travaille sur une file **déjà triée** : il prend les bons patients, dans le bon ordre. »
+
+17. **Tableau de bord médecin** — « Statistiques de la journée, **occupation des services**, patients en attente de prise en charge. »
+18. **Prise en charge (cycle de vie du patient)** — « Il fait passer le patient d'**en attente → en cours → pris en charge → sorti**, et tout le monde le voit en direct. »
+19. **Gestion automatique des lits** — « Quand il prend un patient en charge, un **lit du service s'occupe tout seul** ; quand le patient sort, il se **libère automatiquement**. »
+20. **Rapports PDF mis en forme** — « Il télécharge un **rapport journalier** et un **résumé des prises en charge**, générés en PDF soignés (couleurs Manchester, en-tête, pagination). »
+
+### 🛠️ D. Côté administrateur
+> Phrase d'intro : « L'admin **pilote** la plateforme et **supervise** l'activité. »
+
+21. **Gestion des utilisateurs (CRUD complet)** — « Créer, consulter, modifier, désactiver les comptes (infirmiers, médecins, admins). »
+22. **Gestion des services (CRUD complet)** — « Ajouter/modifier/supprimer un service et **éditer sa capacité en lits**. »
+23. **Gestion des lits (manuelle + automatique)** — « Ajuster manuellement l'occupation, ou laisser le système la gérer au fil des prises en charge. »
+24. **Réinitialisation des mots de passe** — « Trois filets de sécurité : **self-service** (lien de réinitialisation), **remise à zéro par l'admin**, et la **méthode des deux administrateurs** si un admin lui-même est bloqué. »
+25. **Statistiques avancées / analytics** — « Graphiques d'activité **hebdomadaire**, **par service**, indicateurs de performance. »
+26. **Journal d'audit** — « Chaque action sensible est **tracée** : qui a fait quoi, quand. »
+
+### 🔒 E. Fonctions transversales (le socle technique)
+> Phrase d'intro : « Tout cela repose sur des fondations solides. »
+
+27. **Temps réel partout (WebSocket)** — « File, notifications, capacités : tout se synchronise **instantanément** sur tous les écrans. »
+28. **Sécurité** — « Jetons **JWT + rafraîchissement**, mots de passe **chiffrés (bcrypt)**, **rôles** stricts, **limitation anti-force brute** sur la connexion, **journal d'audit**. »
+29. **Profil self-service** — « Chaque utilisateur gère son **profil**, son **mot de passe** et sa **photo**. »
+30. **Notifications ciblées** — « Messages envoyés à la bonne personne / au bon rôle, marquables comme lus. »
+31. **Déploiement en production** — « L'application n'est pas qu'une maquette : elle est **en ligne** (front sur Netlify, back + base PostgreSQL sur Render). »
+32. **Interface responsive & cohérente** — « Un design unifié, utilisable sur ordinateur comme sur mobile. »
+
+---
+
+## 🎯 Annexe B — « Le projet a-t-il assez de fonctionnalités ? » (verdict honnête)
+
+**Oui, largement.** Avec **plus de 30 fonctionnalités** réparties sur **4 profils d'utilisateurs**, un **moteur de décision médical**, du **temps réel**, de la **génération de PDF**, des **statistiques**, une **sécurité complète** et un **déploiement en production**, ce projet est **au-dessus** de ce qu'on attend d'une soutenance de fin de cycle. Le risque n'est pas d'en avoir trop peu — c'est de vouloir **tout montrer** en 20 minutes.
+
+**Tes points forts à mettre en avant :**
+- Tu ne fais pas un simple CRUD : tu résous un **vrai problème métier** (le triage) avec un **protocole reconnu**.
+- Tu couvres un **parcours complet** (patient → infirmier → médecin → admin), pas une seule fonction.
+- Le **temps réel** et le **déploiement en ligne** impressionnent toujours un jury.
+
+**À assumer avec honnêteté si on te pousse (prépare ces réponses) :**
+- *« Où est l'IA ? »* → C'est un **système expert à base de règles**, comme le vrai protocole Manchester. En médecine d'urgence, on veut des décisions **explicables et sûres**, pas une boîte noire. (Piste d'évolution : ML sur données historiques.)
+- *« Est-ce validé cliniquement ? »* → La logique **suit le protocole Manchester** ; la **validation clinique** avec des soignants est la prochaine étape avant un usage réel — assume-le comme une perspective, pas un manque.
+- *« Le patient sans smartphone ? »* → Code utilisable sur n'importe quel écran ; **SMS** et **écran de salle d'attente** prévus en évolution.
+
+**Conseil stratégique :** ne récite pas les 32 fonctionnalités. Montre le **parcours complet en démo** (Annexe A te sert de réserve), puis garde 4-5 fonctionnalités « bonus » (rapport PDF, méthode des deux admins, réévaluation, gestion auto des lits) à **sortir en réponse aux questions** — ça montre de la profondeur sans alourdir la présentation.
