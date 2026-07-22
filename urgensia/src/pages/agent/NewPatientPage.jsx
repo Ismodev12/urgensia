@@ -197,7 +197,9 @@ export default function NewPatientPage() {
       if (echelleDouleur > 0) setDouleurScale(prev => Math.max(prev, echelleDouleur));
       setAnalyseIA({ ids, resume, echelleDouleur });
     } catch (err) {
-      setErreurIA(err.response?.data?.error ?? "L'analyse IA a échoué. Sélectionnez les symptômes manuellement.");
+      const base   = err.response?.data?.error ?? "L'analyse IA a échoué. Sélectionnez les symptômes manuellement.";
+      const detail = err.response?.data?.detail;
+      setErreurIA(detail ? `${base} — ${detail}` : base);
     } finally {
       setAnalysingIA(false);
     }

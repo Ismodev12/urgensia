@@ -23,10 +23,10 @@ module.exports = {
   // Slash final retiré : le CORS compare à l'exact, or le navigateur envoie l'origine sans « / ».
   frontendUrl: (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/+$/, ''),
 
-  // Assistance IA (symptômes en texte libre) — optionnelle : sans clé, la
-  // fonctionnalité est simplement désactivée, le serveur démarre normalement.
-  anthropicApiKey: process.env.ANTHROPIC_API_KEY || null,
-  anthropicModel:  process.env.ANTHROPIC_MODEL   || 'claude-opus-4-8',
+  // Assistance IA (symptômes en texte libre) via Groq — optionnelle : sans
+  // clé, la fonctionnalité est désactivée et le serveur démarre normalement.
+  groqApiKey: process.env.GROQ_API_KEY || null,
+  groqModel:  process.env.GROQ_MODEL   || 'llama-3.3-70b-versatile',
 
   db: {
     host:     process.env.DB_HOST,

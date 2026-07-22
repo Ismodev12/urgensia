@@ -3,34 +3,63 @@ import doctorImg from '../../assets/images/african-doctor-desk-glasses-his-hand-
 import { useForm } from 'react-hook-form';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Activity, Eye, EyeOff, LogIn, AlertCircle, ArrowLeft, ShieldCheck, Mail, Lock, Check } from 'lucide-react';
+import { Activity, Eye, EyeOff, LogIn, AlertCircle, ArrowLeft, ShieldCheck, Mail, Lock, Check, Stethoscope, UserRound, Zap } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+
+// Comptes de démonstration (connexion rapide en un clic)
+const DEMO_ACCOUNTS = [
+  { role: 'agent',   label: 'Agent',   email: 'c.hounkpatin@urgensia.bj', password: 'agent123',   icon: UserRound },
+  { role: 'medecin', label: 'Médecin', email: 'jb.fassinou@urgensia.bj',  password: 'medecin123', icon: Stethoscope },
+  { role: 'admin',   label: 'Admin',   email: 'n.kiki@urgensia.bj',       password: 'admin123',   icon: ShieldCheck },
+];
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember]         = useState(true);
   const [showReset, setShowReset]       = useState(false);
   const [loading, setLoading]           = useState(false);
+  const [demoLoading, setDemoLoading]   = useState(null);   // rôle en cours de connexion démo
   const [apiError, setApiError]         = useState(null);
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const { register, handleSubmit, formState: { errors } } = useForm();
+  const { register, handleSubmit, setValue, formState: { errors } } = useForm();
+
+  // Redirige vers le tableau de bord correspondant au rôle
+  const redirectByRole = (user) => {
+    if (user.role === 'medecin') navigate('/medecin');
+    else if (user.role === 'admin') navigate('/admin');
+    else navigate('/agent');
+  };
 
   const onSubmit = async ({ email, password }) => {
     setLoading(true);
     setApiError(null);
     try {
       const user = await login(email, password);
-      // Redirection selon le rôle retourné par l'API
-      if (user.role === 'medecin') navigate('/medecin');
-      else if (user.role === 'admin') navigate('/admin');
-      else navigate('/agent');
+      redirectByRole(user);
     } catch (err) {
       const msg = err.response?.data?.error ?? 'Erreur de connexion. Vérifiez votre réseau.';
       setApiError(msg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Connexion automatique via un compte démo : remplit le formulaire puis connecte
+  const handleDemoLogin = async (account) => {
+    setValue('email', account.email);
+    setValue('password', account.password);
+    setApiError(null);
+    setDemoLoading(account.role);
+    try {
+      const user = await login(account.email, account.password);
+      redirectByRole(user);
+    } catch (err) {
+      const msg = err.response?.data?.error ?? 'Connexion démo indisponible. Vérifiez que les comptes de démo sont créés.';
+      setApiError(msg);
+    } finally {
+      setDemoLoading(null);
     }
   };
 
@@ -287,6 +316,51 @@ export default function LoginPage() {
                 </AnimatePresence>
               </motion.button>
             </form>
+
+            {/* Connexion rapide — comptes de démonstration */}
+            <div className="mt-7">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex-1 h-px bg-white/10" />
+                <span className="flex items-center gap-1.5 text-xs font-semibold text-teal-200/80 uppercase tracking-wider">
+                  <Zap className="w-3.5 h-3.5" />
+                  Connexion démo
+                </span>
+                <div className="flex-1 h-px bg-white/10" />
+              </div>
+
+              <div className="grid grid-cols-3 gap-2.5">
+                {DEMO_ACCOUNTS.map((account) => {
+                  const Icon = account.icon;
+                  const isBusy = demoLoading === account.role;
+                  const anyBusy = loading || demoLoading !== null;
+                  return (
+                    <motion.button
+                      key={account.role}
+                      type="button"
+                      onClick={() => handleDemoLogin(account)}
+                      disabled={anyBusy}
+                      whileHover={{ scale: anyBusy ? 1 : 1.04 }}
+                      whileTap={{ scale: anyBusy ? 1 : 0.96 }}
+                      className="flex flex-col items-center justify-center gap-1.5 py-3.5 px-2 rounded-2xl border border-white/15 bg-white/5 hover:bg-white/12 hover:border-teal-400/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                      title={`Se connecter en tant que ${account.label} (${account.email})`}
+                    >
+                      {isBusy ? (
+                        <svg className="animate-spin w-5 h-5 text-teal-300" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                      ) : (
+                        <Icon className="w-5 h-5 text-teal-300" />
+                      )}
+                      <span className="text-xs font-semibold text-white/90">{account.label}</span>
+                    </motion.button>
+                  );
+                })}
+              </div>
+              <p className="text-center text-white/40 text-xs mt-3">
+                Un clic connecte automatiquement au tableau de bord.
+              </p>
+            </div>
 
             {/* Accès sécurisé */}
             <div className="mt-6 pt-5 border-t border-white/10 flex items-center justify-center gap-2 text-white/45 text-xs">

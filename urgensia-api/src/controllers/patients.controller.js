@@ -5,6 +5,7 @@ const triage   = require('../services/triage.service');
 const notif    = require('../services/notif.service');
 const retriage = require('../services/retriage.service');
 const symptomeIA = require('../services/symptomeIA.service');
+const env        = require('../config/env');
 
 // ─── Générateur de code suivi patient ───────────────────────────────────────────
 
@@ -751,8 +752,12 @@ const interpreterSymptomes = async (req, res, next) => {
     if (err.code === 'IA_INDISPONIBLE') {
       return res.status(503).json({ error: "L'assistance IA n'est pas configurée sur ce serveur." });
     }
-    console.error('Erreur interprétation IA:', err.message);
-    return res.status(502).json({ error: "L'analyse IA a échoué. Sélectionnez les symptômes manuellement." });
+    // Diagnostic détaillé (statut HTTP + corps d'erreur renvoyé par l'API Claude)
+    const apiDetail = err.error ? JSON.stringify(err.error) : (err.message || String(err));
+    console.error('❌ Erreur interprétation IA — statut:', err.status || 'n/a', '|', apiDetail);
+    const payload = { error: "L'analyse IA a échoué. Sélectionnez les symptômes manuellement." };
+    if (env.nodeEnv !== 'production') payload.detail = `[${err.status || 'n/a'}] ${apiDetail}`;
+    return res.status(502).json(payload);
   }
 };
 

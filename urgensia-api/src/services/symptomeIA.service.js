@@ -1,10 +1,12 @@
 'use strict';
-const Anthropic = require('@anthropic-ai/sdk');
+const Groq = require('groq-sdk');
 const env = require('../config/env');
 
 /**
  * ============================================================
- *  Interprétation de symptômes en TEXTE LIBRE via l'API Claude.
+ *  Interprétation de symptômes en TEXTE LIBRE via l'API Groq.
+ *  Fournisseur gratuit (modèles Llama). Modèle par défaut :
+ *  llama-3.3-70b-versatile (modifiable via GROQ_MODEL).
  * ============================================================
  *  L'infirmier d'accueil-triage décrit un symptôme absent de la liste ;
  *  l'IA le traduit en drapeaux booléens exploitables par le moteur de
@@ -15,8 +17,7 @@ const env = require('../config/env');
  */
 
 // Clés ASCII (produites par l'IA) → clés EXACTES lues par le moteur / le front.
-// « difficultéRespiratoire » porte un accent côté moteur : on le rétablit ici,
-// ce qui évite tout souci d'encodage dans le schéma JSON envoyé à l'IA.
+// « difficultéRespiratoire » porte un accent côté moteur : on le rétablit ici.
 const MAP_CLES = {
   douleurThoracique:      'douleurThoracique',
   difficulteRespiratoire: 'difficultéRespiratoire',
@@ -45,39 +46,30 @@ const DEFINITIONS = `- douleurThoracique : douleur, oppression ou serrement dans
 - brulures : brûlures cutanées
 - diarrhee : selles liquides répétées`;
 
+// JSON mode Groq : la réponse est garantie être un JSON valide.
+// On décrit la structure EXACTE attendue dans la consigne.
 const SYSTEME = `Tu assistes un infirmier d'accueil-triage aux urgences au Bénin. À partir d'une description libre de symptômes (français courant, parfois expressions locales), tu identifies lesquels des symptômes ci-dessous sont présents, pour alimenter un moteur de triage Manchester.
 
 Symptômes possibles (ne mets à true QUE ceux clairement indiqués) :
 ${DEFINITIONS}
 
-Règles :
-- Sois prudent : mets true uniquement si le texte l'indique clairement, sinon false. N'invente rien, ne déduis pas un diagnostic.
-- echelleDouleur : entier de 0 à 10 si une intensité de douleur est décrite (ex. « douleur atroce » ≈ 9, « légère gêne » ≈ 2), sinon 0.
-- resume : une phrase courte, en français, résumant ce que tu as compris.
-Tu es une aide à la décision : l'infirmier valide toujours. Tu ne poses aucun diagnostic.`;
+Réponds UNIQUEMENT par un objet JSON valide (aucun texte autour), avec EXACTEMENT ces clés :
+- les 12 symptômes ci-dessus en booléens (douleurThoracique, difficulteRespiratoire, fievre, vomissements, cephalees, malaise, hemorragie, traumatisme, perteConnaissance, convulsions, brulures, diarrhee)
+- "echelleDouleur" : entier de 0 à 10 (intensité de la douleur si décrite, sinon 0)
+- "resume" : une phrase courte, en français, résumant ce que tu as compris
 
-// Sortie structurée : garantit un JSON conforme (tous les drapeaux + douleur + résumé).
-const SCHEMA = {
-  type: 'object',
-  additionalProperties: false,
-  properties: {
-    ...Object.fromEntries(Object.keys(MAP_CLES).map((k) => [k, { type: 'boolean' }])),
-    echelleDouleur: { type: 'integer', description: '0 à 10 ; 0 si aucune intensité décrite' },
-    resume:         { type: 'string' },
-  },
-  required: [...Object.keys(MAP_CLES), 'echelleDouleur', 'resume'],
-};
+Règles : sois prudent, mets true uniquement si le texte l'indique clairement, sinon false. N'invente rien, ne pose aucun diagnostic. Tu es une aide à la décision : l'infirmier valide toujours.`;
 
 let client = null;
 function getClient() {
-  if (!env.anthropicApiKey) return null;
-  if (!client) client = new Anthropic({ apiKey: env.anthropicApiKey, timeout: 30000 });
+  if (!env.groqApiKey) return null;
+  if (!client) client = new Groq({ apiKey: env.groqApiKey, timeout: 30000 });
   return client;
 }
 
 /** Vrai si la fonctionnalité est configurée (clé API présente). */
 function estDisponible() {
-  return Boolean(env.anthropicApiKey);
+  return Boolean(env.groqApiKey);
 }
 
 /**
@@ -93,16 +85,19 @@ async function interpreterSymptomes(texte) {
     throw err;
   }
 
-  const message = await cli.messages.create({
-    model:      env.anthropicModel,   // claude-opus-4-8 par défaut (ANTHROPIC_MODEL pour changer)
-    max_tokens: 1024,
-    system:     SYSTEME,
-    messages:   [{ role: 'user', content: texte }],
-    output_config: { format: { type: 'json_schema', schema: SCHEMA } },
+  const completion = await cli.chat.completions.create({
+    model:           env.groqModel,   // llama-3.3-70b-versatile par défaut
+    temperature:     0,               // classification déterministe
+    max_tokens:      1024,
+    response_format: { type: 'json_object' },
+    messages: [
+      { role: 'system', content: SYSTEME },
+      { role: 'user',   content: texte },
+    ],
   });
 
-  const bloc   = message.content.find((b) => b.type === 'text');
-  const parsed = JSON.parse(bloc ? bloc.text : '{}');
+  const raw    = completion.choices?.[0]?.message?.content || '{}';
+  const parsed = JSON.parse(raw);
 
   // ASCII → clés exactes du moteur ; on ne conserve que les symptômes à true.
   const symptomes = {};
